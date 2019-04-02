@@ -1,6 +1,10 @@
 har2requests
 ============
 
+-  Step 1: Interact with a website from your usual browser
+-  Step 2: automatically generate the Python code to replay your
+   requests
+
 Motivation
 ----------
 
