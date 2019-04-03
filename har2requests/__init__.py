@@ -33,8 +33,6 @@ def match_wrapped(header, text):
 
 
 def match(header, text):
-    if len(text) > MAX_SIZE:
-        return
     if len(header) < SIZE_THRESHOLD:
         return
     if len(text) / len(header) < MATCH_FRACTION_THRESHOLD:
@@ -159,7 +157,7 @@ def infer_headers_origin(requests, base_headers):
                     name = new_variable_name(header_key)
                     variables_to_bind[response_id].append((name, value))
                     header_to_variable[value] = name
-        if request.responseText:
+        if SIZE_THRESHOLD <= len(request.responseText) <= MAX_SIZE:
             responses_db.append((request_id, request.responseText))
 
     return variables_to_bind
