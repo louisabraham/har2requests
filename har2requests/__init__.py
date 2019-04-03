@@ -15,7 +15,9 @@ from .stringalg import longest_common_substring
 
 
 # we look at the last responses to find the definition of a header
-RESPONSE_LOOKUP = 3
+RESPONSE_LOOKUP = 5
+# limit to the size of a response to be searched
+MAX_SIZE = 100_000
 # what size must be a header to be searched
 SIZE_THRESHOLD = 16
 # what fraction of a header must be present in a response
@@ -31,6 +33,8 @@ def match_wrapped(header, text):
 
 
 def match(header, text):
+    if len(text) > MAX_SIZE:
+        return
     if len(header) < SIZE_THRESHOLD:
         return
     if len(text) / len(header) < MATCH_FRACTION_THRESHOLD:
