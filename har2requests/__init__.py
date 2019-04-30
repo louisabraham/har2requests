@@ -6,7 +6,7 @@ import sys
 import subprocess
 import io
 from functools import reduce, lru_cache
-import datetime
+from datetime import datetime
 from operator import attrgetter
 
 import click
@@ -62,7 +62,7 @@ class Request(
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=Request.dict_from_har(request["postData"]["params"])
-            if request["method"] == "POST"
+            if request["method"] in ["POST", "PUT"]
             else None,
             responseText=response["content"]["text"],
             datetime=Request.parse_datetime(startedDateTime),
@@ -76,7 +76,7 @@ class Request(
     @staticmethod
     def parse_datetime(s):
         s = s[:-3] + s[-2:]
-        return datetime.datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f%z")
+        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f%z")
 
     @staticmethod
     def process_headers(headers):
@@ -99,7 +99,7 @@ class Request(
             f"r = requests.{self.method.lower()}({self.url!r},",
             f'    {f"cookies={self.cookies!r}," if self.cookies else ""}',
             f"""    {f"headers={'{'}**base_headers, {repr(headers)[1:]}," if self.headers else ""}""",
-            f'    {f"data={self.postData!r}," if self.postData else ""}',
+            f'    {f"json={self.postData!r}," if self.postData else ""}',
             ")",
             sep="\n",
             file=file,
