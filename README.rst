@@ -55,3 +55,10 @@ To read from the clipboard:
 ::
 
    pbpaste | har2requests - > output.py
+
+TODO
+====
+
+-  Use requests.Session
+-  Handle cookies (e.g. with a session)
+-  handle text field from post requests
