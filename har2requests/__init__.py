@@ -64,7 +64,9 @@ class Request(
             postData=Request.dict_from_har(request["postData"]["params"])
             if request["method"] in ["POST", "PUT"]
             else None,
-            responseText=response["content"]["text"],
+            responseText=response["content"]["text"]
+            if response["content"]["size"] > 0
+            else "",  # see <https://github.com/louisabraham/har2requests/issues/2>
             datetime=Request.parse_datetime(startedDateTime),
         )
 
