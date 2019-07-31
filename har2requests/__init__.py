@@ -6,7 +6,7 @@ import sys
 import subprocess
 import io
 from functools import reduce, lru_cache
-from datetime import datetime
+import dateutil.parser
 from operator import attrgetter
 
 import click
@@ -62,23 +62,18 @@ class Request(
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=Request.dict_from_har(request["postData"]["params"])
-            if request["method"] in ["POST", "PUT"]
+            if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0
             else None,
             responseText=response["content"]["text"]
             if response["content"]["size"] > 0
             else "",  # see <https://github.com/louisabraham/har2requests/issues/2>
-            datetime=Request.parse_datetime(startedDateTime),
+            datetime=dateutil.parser.parse(startedDateTime),
         )
 
     @staticmethod
     def dict_from_har(j):
         """Build a dictionary from the names and values"""
         return {x["name"]: x["value"] for x in j}
-
-    @staticmethod
-    def parse_datetime(s):
-        s = s[:-3] + s[-2:]
-        return datetime.strptime(s, "%Y-%m-%dT%H:%M:%S.%f%z")
 
     @staticmethod
     def process_headers(headers):
