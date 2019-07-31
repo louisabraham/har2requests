@@ -164,7 +164,7 @@ def infer_headers_origin(requests, base_headers):
 
 
 @click.command()
-@click.argument("src", type=click.File())
+@click.argument("src", type=click.File(encoding="utf-8"))
 def main(src):
     entries = json.load(src)["log"]["entries"]
 
