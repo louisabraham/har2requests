@@ -19,8 +19,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/louisabraham/har2requests",
     packages=["har2requests"],
-    install_requires=["click", "python-dateutil"],
-    extras_require={"dev": ["black"]},
+    install_requires=["black", "click", "python-dateutil"],
     python_requires=">=3.6",
     entry_points={"console_scripts": ["har2requests = har2requests:main"]},
     classifiers=[
