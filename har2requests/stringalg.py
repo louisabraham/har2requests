@@ -13,7 +13,7 @@ def to_int_keys(l):
     seen = set()
     ls = []
     for e in l:
-        if not e in seen:
+        if e not in seen:
             ls.append(e)
             seen.add(e)
     ls.sort()
