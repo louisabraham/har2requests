@@ -16,7 +16,7 @@ setup(
     author_email="louis.abraham@yahoo.fr",
     description="Generate Python Requests code from HAR file",
     long_description=read("README.md"),
-    long_description_content_type='text/markdown',
+    long_description_content_type="text/markdown",
     url="https://github.com/louisabraham/har2requests",
     packages=["har2requests"],
     install_requires=["click", "python-dateutil"],
