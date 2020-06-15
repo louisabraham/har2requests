@@ -56,14 +56,26 @@ class Request(
 ):
     @staticmethod
     def from_json(request, response, startedDateTime):
+        if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
+            pd = request["postData"]
+            params = "params" in pd
+            text = "text" in pd
+            assert (
+                params + text == 1
+            ), 'You need exactly one of "params" or "text" in field postData'
+            if params:
+                postData = Request.dict_from_har(pd["params"])
+            if text:
+                postData = Request.dict_from_har(pd["text"])
+        else:
+            postData = None
+
         return Request(
             method=request["method"],
             url=request["url"],
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
-            postData=Request.dict_from_har(request["postData"]["params"])
-            if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0
-            else None,
+            postData=postData,
             responseText=response["content"].get("text", "")
             if response["content"]["size"] > 0
             else "",  # see <https://github.com/louisabraham/har2requests/issues/2>
@@ -218,4 +230,3 @@ def main(src):
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
     main()
-
