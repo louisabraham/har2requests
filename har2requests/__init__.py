@@ -104,11 +104,19 @@ class Request(
         for k, v in headers.items():
             if v in header_to_variable:
                 headers[k] = Variable(header_to_variable[v])
+        if headers:
+            headers_string = f"headers={{**base_headers, {repr(headers)[1:]},"
+        else:
+            headers_string = "headers=base_headers"
+
+        # previously, headers_string =
+        # f"""{f"headers={{**base_headers, {repr(headers)[1:]}," if headers else ""}"""
+
         print(
             f"r = requests.{self.method.lower()}({self.url!r},",
-            f'    {f"cookies={self.cookies!r}," if self.cookies else ""}',
-            f"""    {f"headers={'{'}**base_headers, {repr(headers)[1:]}," if self.headers else ""}""",
-            f'    {f"json={self.postData!r}," if self.postData else ""}',
+            f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
+            headers_string,
+            f'{f"json={self.postData!r}," if self.postData else ""}',
             ")",
             sep="\n",
             file=file,
