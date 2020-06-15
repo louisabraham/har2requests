@@ -70,17 +70,22 @@ class Request(
         else:
             postData = None
 
-        return Request(
+        req = Request(
             method=request["method"],
             url=request["url"],
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=postData,
-            responseText=response["content"].get("text", "")
-            if response["content"]["size"] > 0
-            else "",  # see <https://github.com/louisabraham/har2requests/issues/2>
+            responseText=response["content"].get("text", ""),
             datetime=dateutil.parser.parse(startedDateTime),
         )
+
+        if response["content"]["size"] > 0 and not req.responseText:
+            print(
+                "WARNING: content size > 0 but responseText is empty", file=sys.stderr
+            )
+
+        return req
 
     @staticmethod
     def dict_from_har(j):
