@@ -58,6 +58,7 @@ class Request(
     
     @staticmethod
     def from_json(request, response, startedDateTime, unsafe=False):
+        postData = None
         if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
             pd = request["postData"]
             params = "params" in pd
@@ -75,8 +76,6 @@ class Request(
                 postData = Request.dict_from_har(pd["params"])
             if text:
                 postData = Request.dict_from_har(pd["text"])
-        else:
-            postData = None
 
         req = Request(
             method=request["method"],
