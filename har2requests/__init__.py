@@ -8,6 +8,7 @@ import io
 from functools import reduce, lru_cache
 import dateutil.parser
 from operator import attrgetter
+import warnings
 
 import click
 
@@ -54,15 +55,22 @@ class Request(
         "Request", "method, url, cookies, headers, postData, responseText, datetime"
     )
 ):
+    
     @staticmethod
-    def from_json(request, response, startedDateTime):
+    def from_json(request, response, startedDateTime, unsafe=False):
         if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
             pd = request["postData"]
             params = "params" in pd
             text = "text" in pd
-            assert (
-                params + text == 1
-            ), 'You need exactly one of "params" or "text" in field postData'
+
+            POSTDATA_WARNING = 'You need exactly one of "params" or "text" in field postData'
+            if not unsafe:
+                assert (
+                    params + text == 1
+                ), POSTDATA_WARNING
+            else:
+                if params + text != 1:
+                    warnings.warn(POSTDATA_WARNING)
             if params:
                 postData = Request.dict_from_har(pd["params"])
             if text:
@@ -187,14 +195,16 @@ def infer_headers_origin(requests, base_headers):
 
 @click.command()
 @click.argument("src", type=click.File(encoding="utf-8"))
-def main(src):
+@click.option('--unsafe', is_flag=True)
+def main(src, unsafe):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
     requests = []
     for entry in entries:
         request = Request.from_json(
-            entry["request"], entry["response"], entry["startedDateTime"]
+            entry["request"], entry["response"], entry["startedDateTime"],
+            unsafe=unsafe
         )
         requests.append(request)
 
