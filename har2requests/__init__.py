@@ -9,6 +9,7 @@ from functools import reduce, lru_cache
 import dateutil.parser
 from operator import attrgetter
 import warnings
+import traceback
 
 import click
 
@@ -55,7 +56,6 @@ class Request(
         "Request", "method, url, cookies, headers, postData, responseText, datetime"
     )
 ):
-    
     @staticmethod
     def from_json(request, response, startedDateTime, unsafe=False):
         postData = None
@@ -64,18 +64,18 @@ class Request(
             params = "params" in pd
             text = "text" in pd
 
-            POSTDATA_WARNING = 'You need exactly one of "params" or "text" in field postData'
+            POSTDATA_WARNING = (
+                'You need exactly one of "params" or "text" in field postData'
+            )
             if not unsafe:
-                assert (
-                    params + text == 1
-                ), POSTDATA_WARNING
+                assert params + text == 1, POSTDATA_WARNING
             else:
                 if params + text != 1:
                     warnings.warn(POSTDATA_WARNING)
             if params:
                 postData = Request.dict_from_har(pd["params"])
             if text:
-                postData = Request.dict_from_har(pd["text"])
+                postData = pd["text"]
 
         req = Request(
             method=request["method"],
@@ -163,8 +163,7 @@ def infer_headers_origin(requests, base_headers):
     variable_names = set()
 
     def new_variable_name(base_name):
-        """Find a new unused variable name
-        """
+        """Find a new unused variable name"""
         i = 1
         while f"{base_name}_{i}" in variable_names:
             i += 1
@@ -194,18 +193,27 @@ def infer_headers_origin(requests, base_headers):
 
 @click.command()
 @click.argument("src", type=click.File(encoding="utf-8"))
-@click.option('--unsafe', is_flag=True)
+@click.option("--unsafe", is_flag=True)
 def main(src, unsafe):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
     requests = []
     for entry in entries:
-        request = Request.from_json(
-            entry["request"], entry["response"], entry["startedDateTime"],
-            unsafe=unsafe
-        )
-        requests.append(request)
+        try:
+            request = Request.from_json(
+                entry["request"],
+                entry["response"],
+                entry["startedDateTime"],
+                unsafe=unsafe,
+            )
+            requests.append(request)
+        except Exception:
+            print(f"Exception while parsing\n{entry}\n{'-'*10}")
+            if unsafe:
+                traceback.print_exc()
+            else:
+                raise
 
     requests.sort(key=attrgetter("datetime"))
 
@@ -252,3 +260,4 @@ def main(src, unsafe):
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
     main()
+
