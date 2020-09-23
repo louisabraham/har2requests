@@ -71,7 +71,7 @@ class Request(
                 assert params + text == 1, POSTDATA_WARNING
             else:
                 if params + text != 1:
-                    warnings.warn(POSTDATA_WARNING)
+                    warnings.warn(POSTDATA_WARNING + f"\n{request}\n{'-'*10})
             if params:
                 postData = Request.dict_from_har(pd["params"])
             if text:
