@@ -66,7 +66,7 @@ class Request(
             if params:
                 postData = Request.dict_from_har(pd["params"])
             if text:
-                postData = Request.dict_from_har(pd["text"])
+                postData = pd["text"]
         else:
             postData = None
 
@@ -117,11 +117,13 @@ class Request(
         # previously, headers_string =
         # f"""{f"headers={{**base_headers, {repr(headers)[1:]}," if headers else ""}"""
 
+        jsonOrData = "json" if isinstance(self.postData, dict) else "data"
+
         print(
             f"r = requests.{self.method.lower()}({self.url!r},",
             f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
             headers_string,
-            f'{f"json={self.postData!r}," if self.postData else ""}',
+            f'{f"{jsonOrData}={self.postData!r}," if self.postData else ""}',
             ")",
             sep="\n",
             file=file,
