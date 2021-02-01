@@ -48,6 +48,8 @@ To read from the clipboard:
 When encountering errors, you can use the `--unsafe` feature that will display warnings
 instead of errors if the HAR file does not fit the specification (it happens a lot).
 
+`har2requests` uses string matching algorithms to find the origin of authorization headers. If your file is too big, it might be slow. You can disable it with `--no-infer`.
+
 # TODO
 
   - Use requests.Session

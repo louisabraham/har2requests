@@ -6,12 +6,13 @@ import sys
 import subprocess
 import io
 from functools import reduce, lru_cache
-import dateutil.parser
 from operator import attrgetter
 import warnings
 import traceback
 
 import click
+import dateutil.parser
+from tqdm import tqdm
 
 from .stringalg import longest_common_substring
 
@@ -172,7 +173,8 @@ def infer_headers_origin(requests, base_headers):
 
     # for each header of each request,
     # try to match it in the responses_db
-    for request_id, request in enumerate(requests):
+    print("Inferring header origin. If it's slow, try --no-infer", file=sys.stderr)
+    for request_id, request in enumerate(tqdm(requests)):
         for header_key, value in request.headers.items():
             if header_key in base_headers:
                 continue
@@ -192,7 +194,8 @@ def infer_headers_origin(requests, base_headers):
 @click.command()
 @click.argument("src", type=click.File(encoding="utf-8"))
 @click.option("--unsafe", is_flag=True)
-def main(src, unsafe):
+@click.option("--no-infer", is_flag=True)
+def main(src, unsafe, no_infer):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
@@ -219,7 +222,10 @@ def main(src, unsafe):
     base_headers = reduce(dict_intersection, (r.headers for r in requests))
 
     # detect origin of headers
-    variables_to_bind = infer_headers_origin(requests, base_headers)
+    if no_infer:
+        variables_to_bind = [[] for _ in range(len(requests))]
+    else:
+        variables_to_bind = infer_headers_origin(requests, base_headers)
 
     # output through black
     proc = subprocess.Popen(
