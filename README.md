@@ -45,6 +45,9 @@ To read from the clipboard:
 
     pbpaste | har2requests - > output.py
 
+When encountering errors, you can use the `--unsafe` feature that will display warnings
+instead of errors if the HAR file does not fit the specification (it happens a lot).
+
 # TODO
 
   - Use requests.Session
