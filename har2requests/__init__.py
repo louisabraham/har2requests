@@ -349,7 +349,7 @@ class Request(
             datetime=dateutil.parser.parse(startedDateTime),
         )
 
-        if response["content"]["size"] > 0 and not req.responseText:
+        if getattr(response["content"], "size", 0) > 0 and not req.responseText:
             print(
                 "WARNING: content size > 0 but responseText is empty", file=sys.stderr
             )
