@@ -88,9 +88,7 @@ class Request(
         )
 
         if response["content"]["size"] > 0 and not req.responseText:
-            warnings.warn(
-                "content size > 0 but responseText is empty"
-            )
+            warnings.warn("content size > 0 but responseText is empty")
 
         return req
 
