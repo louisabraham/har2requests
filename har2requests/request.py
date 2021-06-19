@@ -77,12 +77,12 @@ class Request:
         headers.pop("Content-Length", None)
         return headers
 
-    def dump(self, base_headers=None, header_to_variable=None, file=sys.stdout):
-        if base_headers is None:
-            base_headers = {}
+    def dump(self, session_headers=None, header_to_variable=None, file=sys.stdout):
+        if session_headers is None:
+            session_headers = {}
         if header_to_variable is None:
             header_to_variable = {}
-        headers = dict_change(base_headers, self.headers)
+        headers = dict_change(session_headers, self.headers)
         # display variable name instead of header
         for k, v in headers.items():
             if v in header_to_variable:

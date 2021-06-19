@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from collections import deque
+from collections import Counter, deque
 import json
 import sys
 import subprocess
@@ -8,12 +8,13 @@ import io
 from functools import partial, reduce, lru_cache
 from operator import attrgetter
 import traceback
+from typing import List
 
 import click
 from tqdm import tqdm
 
 from .stringalg import longest_common_substring
-from .utils import dict_intersection
+from .utils import dict_change
 from .request import Request
 
 # we look at the last responses to find the definition of a header
@@ -44,7 +45,7 @@ def match(header, text) -> bool:
     return _match_wrapped(header, text)
 
 
-def infer_headers_origin(requests, base_headers):
+def infer_headers_origin(requests, all_session_headers):
     """
     Returns:
         variables_to_bind : List[List[name, value]]
@@ -70,9 +71,11 @@ def infer_headers_origin(requests, base_headers):
     # for each key of each header of each request,
     # try to match it in the responses_db
     print("Inferring header origin. If it's slow, try --no-infer.", file=sys.stderr)
-    for request_id, request in enumerate(tqdm(requests)):
+    for request_id, (request, session_headers) in enumerate(
+        zip(tqdm(requests), all_session_headers)
+    ):
         for header_key, value in request.headers.items():
-            if header_key in base_headers:
+            if header_key in session_headers:
                 continue
             if value in header_to_variable:
                 continue
@@ -90,6 +93,31 @@ def infer_headers_origin(requests, base_headers):
     return variables_to_bind
 
 
+def infer_session_headers(requests):
+    n_requests = len(requests)
+    count = Counter()
+    record = [[] for _ in range(len(requests))]
+    for i, r in reversed(list(enumerate(requests))):
+        for k, v in r.headers.items():
+            count[k] += 1
+            count[k, v] += 1
+            if count[k, v] > 1 and count[k, v] / count[k] > 0.5:
+                record[i].append(k)
+
+    ans = []
+    headers = {}
+    for i, (r, rec) in enumerate(zip(requests, record)):
+        for k in rec:
+            headers[k] = r.headers[k]
+        for k in headers:
+            if k in r.headers:
+                count[k] -= 1
+            elif count[k] / (n_requests - i) < 0.5:
+                headers[k] = None
+        ans.append(headers.copy())
+    return ans
+
+
 @click.command()
 @click.argument("src", type=click.File(encoding="utf-8"))
 @click.option("--unsafe", is_flag=True)
@@ -99,7 +127,7 @@ def main(src, unsafe, no_infer, include_options):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
-    requests = []
+    requests: List[Request] = []
     for entry in entries:
         try:
             request = Request.from_json(
@@ -120,9 +148,7 @@ def main(src, unsafe, no_infer, include_options):
 
     # compute common headers
     # TODO: use increasing list of base_headers
-    # TODO: new headers should be used at least twice
-    # TODO? cluster remaining headers
-    base_headers = reduce(dict_intersection, (r.headers for r in requests))
+    all_session_headers = infer_session_headers(requests)
 
     # detect origin of headers
     # TODO: use variables for all long stuff but keep flagging
@@ -130,7 +156,7 @@ def main(src, unsafe, no_infer, include_options):
     if no_infer:
         variables_to_bind = [[] for _ in range(len(requests))]
     else:
-        variables_to_bind = infer_headers_origin(requests, base_headers)
+        variables_to_bind = infer_headers_origin(requests, all_session_headers)
 
     # output through black
     proc = subprocess.Popen(
@@ -143,13 +169,21 @@ def main(src, unsafe, no_infer, include_options):
     output("s = requests.Session()\n")
 
     # output headers
-    output(f"s.headers.update({base_headers!r})\n")
-
+    current_session_headers = {}
     # output requests
     header_to_variable = {}
-    for (request, variable_definitions) in zip(requests, variables_to_bind):
+    for (request, session_headers, variable_definitions) in zip(
+        requests, all_session_headers, variables_to_bind
+    ):
+
+        header_changes = dict_change(current_session_headers, session_headers)
+        if header_changes:
+            output(f"s.headers.update({header_changes!r})\n")
+        current_session_headers = session_headers
+
+        # print diff s_headers, current_session_headers
         request.dump(
-            base_headers=base_headers,
+            session_headers=current_session_headers,
             header_to_variable=header_to_variable,
             file=wrapper,
         )
