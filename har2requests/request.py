@@ -29,7 +29,7 @@ class Request:
     datetime: datetime
 
     @staticmethod
-    def from_json(request, response, startedDateTime, unsafe=False):
+    def from_json(request, response, startedDateTime):
         url = request["url"]
         if request.get("queryString", []):
             query = Request.dict_from_har(request["queryString"])
@@ -43,16 +43,7 @@ class Request:
             params = "params" in pd
             text = "text" in pd
 
-            # disable annoying warning
-            # POSTDATA_WARNING = (
-            #     'You need exactly one of "params" or "text" in field postData'
-            # )
-            # if not unsafe:
-            #     assert params + text == 1, POSTDATA_WARNING
-            # else:
-            #     if params + text != 1:
-            #         warnings.warn(POSTDATA_WARNING + f"\n{request}\n{'-'*10}")
-
+            # if both are presents, only params will be used
             if text:
                 postData = pd["text"]
             if params:

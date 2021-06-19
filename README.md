@@ -45,7 +45,9 @@ To read from the clipboard:
 
     pbpaste | har2requests - > output.py
 
+By default, OPTIONS requests are ignored. To include them, use `--include-options`.
+
 When encountering errors, you can use the `--unsafe` feature that will display warnings
-instead of errors if the HAR file does not fit the specification (it happens a lot).
+instead of errors if the HAR file does not fit the specification.
 
 `har2requests` uses string matching algorithms to find the origin of authorization headers. If your file is too big, it might be slow. You can disable it with `--no-infer`.
