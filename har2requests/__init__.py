@@ -69,7 +69,7 @@ def infer_headers_origin(requests, base_headers):
 
     # for each key of each header of each request,
     # try to match it in the responses_db
-    print("Inferring header origin. If it's slow, try --no-infer", file=sys.stderr)
+    print("Inferring header origin. If it's slow, try --no-infer.", file=sys.stderr)
     for request_id, request in enumerate(tqdm(requests)):
         for header_key, value in request.headers.items():
             if header_key in base_headers:
@@ -142,9 +142,10 @@ def main(src, safe, no_infer, include_options):
 
     output = partial(print, file=wrapper)
     output("import requests")
+    output("s = requests.Session()\n")
 
     # output headers
-    output(f"base_headers = {base_headers!r}\n")
+    output(f"s.headers.update({base_headers!r})\n")
 
     # output requests
     header_to_variable = {}

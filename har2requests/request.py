@@ -97,17 +97,15 @@ class Request:
             if v in header_to_variable:
                 headers[k] = Variable(header_to_variable[v])
         if headers:
-            headers_string = f"headers={{**base_headers, {repr(headers)[1:]},"
+            headers_string = f"headers={repr(headers)},"
         else:
-            headers_string = "headers=base_headers"
-
-        # previously, headers_string =
-        # f"""{f"headers={{**base_headers, {repr(headers)[1:]}," if headers else ""}"""
+            headers_string = ""
 
         print(
-            f"r = requests.{self.method.lower()}({self.url!r},",
+            f"r = s.{self.method.lower()}({self.url!r},",
             f'{f"params={self.query!r}," if self.query else ""}',
-            f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
+            # cookies should be managed at the  session level
+            # f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
             headers_string,
             f'{f"data={self.postData!r}," if self.postData else ""}',
             ")",
