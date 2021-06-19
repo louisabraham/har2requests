@@ -197,7 +197,6 @@ def main(src, unsafe, no_infer, include_options):
                 definition = value
                 for k, v in json_dfs(request.responseData):
                     if v in value and len(v) / len(value) > 0.5:
-                        print(repr(value), file=sys.stderr)
                         definition = Variable(
                             (
                                 '"'
