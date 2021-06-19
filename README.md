@@ -1,17 +1,17 @@
 # har2requests
 
-  - Step 1: Interact with a website from your usual browser
-  - Step 2: automatically generate the Python code to replay your
-    requests
+- Step 1: Interact with a website from your usual browser
+- Step 2: automatically generate the Python code to replay your
+  requests
 
 ## Motivation
 
 To write bots in Python, the two main options are:
 
-  - [requests](https://github.com/kennethreitz/requests) to produce HTTP
-    requests directly
-  - [selenium](https://github.com/SeleniumHQ/selenium) to control a web
-    browser
+- [requests](https://github.com/kennethreitz/requests) to produce HTTP
+  requests directly
+- [selenium](https://github.com/SeleniumHQ/selenium) to control a web
+  browser
 
 Of course, requests bots are more stable but they require more daunting
 work to reverse engineer the javascript code and reproduce every request
@@ -21,12 +21,12 @@ Discover har2requests\!
 
 ## Features
 
-  - Automatic requests code generation from a [HAR
-    file](https://en.wikipedia.org/wiki/.har)
-  - Detection of the headers common to all requests and code
-    factorization
-  - Clever inference on the origin of authorization headers
-  - Code formatting using [black](https://github.com/ambv/black)
+- Automatic requests code generation from a [HAR
+  file](https://en.wikipedia.org/wiki/.har)
+- Detection of the headers common to all requests and code
+  factorization
+- Clever inference on the origin of authorization headers
+- Code formatting using [black](https://github.com/ambv/black)
 
 ## Installation
 
@@ -49,9 +49,3 @@ When encountering errors, you can use the `--unsafe` feature that will display w
 instead of errors if the HAR file does not fit the specification (it happens a lot).
 
 `har2requests` uses string matching algorithms to find the origin of authorization headers. If your file is too big, it might be slow. You can disable it with `--no-infer`.
-
-# TODO
-
-  - Use requests.Session
-  - Handle cookies (e.g. with a session)
-  - handle text field from post requests
