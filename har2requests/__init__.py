@@ -14,7 +14,7 @@ import click
 from tqdm import tqdm
 
 from .stringalg import longest_common_substring
-from .utils import dict_change
+from .utils import dict_change, json_dfs
 from .request import Request, Variable
 
 # we look at the last responses to find the definition of a header
@@ -149,7 +149,6 @@ def main(src, unsafe, no_infer, include_options):
 
     # detect origin of headers
     # TODO: use variables for all long stuff but keep flagging
-    # TODO: get path of longest string in JSON
     if no_infer:
         variables_to_bind = [[] for _ in range(len(requests))]
     else:
@@ -195,8 +194,24 @@ def main(src, unsafe, no_infer, include_options):
                 "# These variables probably come from the result of the request above",
             )
             for (name, value) in variable_definitions:
+                definition = value
+                for k, v in json_dfs(request.responseData):
+                    if v in value and len(v) / len(value) > 0.5:
+                        print(repr(value), file=sys.stderr)
+                        definition = Variable(
+                            (
+                                '"'
+                                + value.replace(
+                                    v, f'''" + r.json()["{'"]["'.join(k)}"] + "'''
+                                )
+                                + '"'
+                            )
+                            .replace('"" + ', "")
+                            .replace(' + ""', "")
+                        )
+                        break
                 output(
-                    f"{name} = {value!r}",
+                    f"{name} = {definition!r}",
                 )
                 header_to_variable[value] = name
             output(

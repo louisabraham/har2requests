@@ -4,6 +4,7 @@ from typing import Union
 from datetime import datetime
 import sys
 from urllib.parse import urlsplit, urlunsplit
+import json
 
 import dateutil.parser
 
@@ -26,6 +27,7 @@ class Request:
     headers: dict
     postData: Union[str, dict]
     responseText: str
+    responseData: dict
     datetime: datetime
 
     @staticmethod
@@ -49,6 +51,12 @@ class Request:
             if params:
                 postData = Request.dict_from_har(pd["params"])
 
+        responseText = response["content"].get("text", "")
+        if "application/json" in response["content"].get("mimeType"):
+            responseData = json.loads(responseText)
+        else:
+            responseData = None
+
         req = Request(
             method=request["method"],
             url=url,
@@ -56,7 +64,8 @@ class Request:
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=postData,
-            responseText=response["content"].get("text", ""),
+            responseText=responseText,
+            responseData=responseData,
             datetime=dateutil.parser.parse(startedDateTime),
         )
 
