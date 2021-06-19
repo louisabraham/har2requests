@@ -1,23 +1,20 @@
 #!/usr/bin/env python3
 
-from collections import namedtuple, deque
+from collections import deque
 import json
 import sys
 import subprocess
 import io
 from functools import reduce, lru_cache
 from operator import attrgetter
-import warnings
 import traceback
-from dataclasses import dataclass
-from typing import Union
-from datetime import datetime
 
 import click
-import dateutil.parser
 from tqdm import tqdm
 
 from .stringalg import longest_common_substring
+from .utils import dict_intersection
+from .request import Request
 
 # we look at the last responses to find the definition of a header
 RESPONSE_LOOKUP = 5
@@ -31,129 +28,20 @@ MATCH_FRACTION_THRESHOLD = 0.5
 
 
 @lru_cache(50)
-def match_wrapped(header, text):
+def _match_wrapped(header, text):
     match_size = longest_common_substring(header, text)
     match_fraction = match_size / len(header)
     return match_fraction > MATCH_FRACTION_THRESHOLD
 
 
-def match(header, text):
+def match(header, text) -> bool:
     if len(header) < SIZE_THRESHOLD:
-        return
+        return False
     if len(text) / len(header) < MATCH_FRACTION_THRESHOLD:
-        return
+        return False
     if not text:
-        return
-    return match_wrapped(header, text)
-
-
-class Variable(str):
-    """Variable class, used to shortcut the !r format"""
-
-    def __repr__(self):
-        return self
-
-
-@dataclass
-class Request:
-    method: str
-    url: str
-    cookies: dict
-    headers: dict
-    postData: Union[str, dict]
-    responseText: str
-    datetime: datetime
-
-    @staticmethod
-    def from_json(request, response, startedDateTime, unsafe=False):
-        postData = None
-        if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
-            pd = request["postData"]
-            params = "params" in pd
-            text = "text" in pd
-
-            POSTDATA_WARNING = (
-                'You need exactly one of "params" or "text" in field postData'
-            )
-            if not unsafe:
-                assert params + text == 1, POSTDATA_WARNING
-            else:
-                if params + text != 1:
-                    warnings.warn(POSTDATA_WARNING + f"\n{request}\n{'-'*10}")
-            if text:
-                postData = pd["text"]
-            if params:
-                postData = Request.dict_from_har(pd["params"])
-
-        req = Request(
-            method=request["method"],
-            url=request["url"],
-            cookies=Request.dict_from_har(request["cookies"]),
-            headers=Request.process_headers(Request.dict_from_har(request["headers"])),
-            postData=postData,
-            responseText=response["content"].get("text", ""),
-            datetime=dateutil.parser.parse(startedDateTime),
-        )
-
-        if response["content"]["size"] > 0 and not req.responseText:
-            warnings.warn("content size > 0 but responseText is empty")
-
-        return req
-
-    @staticmethod
-    def dict_from_har(j):
-        """Build a dictionary from the names and values"""
-        return {x["name"]: x["value"] for x in j}
-
-    @staticmethod
-    def process_headers(headers):
-        headers = headers.copy()
-        headers.pop("Content-Type", None)
-        headers.pop("Content-Length", None)
-        return headers
-
-    def dump(self, base_headers=None, header_to_variable=None, file=sys.stdout):
-        if base_headers is None:
-            base_headers = {}
-        if header_to_variable is None:
-            header_to_variable = {}
-        headers = dict_change(base_headers, self.headers)
-        # display variable name instead of header
-        for k, v in headers.items():
-            if v in header_to_variable:
-                headers[k] = Variable(header_to_variable[v])
-        if headers:
-            headers_string = f"headers={{**base_headers, {repr(headers)[1:]},"
-        else:
-            headers_string = "headers=base_headers"
-
-        # previously, headers_string =
-        # f"""{f"headers={{**base_headers, {repr(headers)[1:]}," if headers else ""}"""
-
-        print(
-            f"r = requests.{self.method.lower()}({self.url!r},",
-            f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
-            headers_string,
-            f'{f"data={self.postData!r}," if self.postData else ""}',
-            ")",
-            sep="\n",
-            file=file,
-        )
-
-
-def dict_intersection(a: dict, b: dict):
-    """Elements that are the same in a and b"""
-    return {k: v for k, v in a.items() if k in b and b[k] == v}
-
-
-def dict_change(a: dict, b: dict):
-    """Elements of b that are not the same in a"""
-    return {k: v for k, v in b.items() if k not in a or a[k] != v}
-
-
-def dict_delete(a: dict, b: dict):
-    """Elements that are in a but not in b"""
-    return [k for k in a if k not in b]
+        return False
+    return _match_wrapped(header, text)
 
 
 def infer_headers_origin(requests, base_headers):
