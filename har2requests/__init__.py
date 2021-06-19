@@ -145,7 +145,7 @@ def dict_change(a: dict, b: dict):
 
 
 def dict_delete(a: dict, b: dict):
-    """Elements that are in b but not in a"""
+    """Elements that are in a but not in b"""
     return [k for k in a if k not in b]
 
 
@@ -264,4 +264,3 @@ def main(src, unsafe, no_infer):
 if __name__ == "__main__":
     # pylint: disable=no-value-for-parameter
     main()
-
