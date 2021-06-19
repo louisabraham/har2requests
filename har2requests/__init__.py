@@ -127,7 +127,7 @@ class Request(
             f"r = requests.{self.method.lower()}({self.url!r},",
             f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
             headers_string,
-            f'{f"json={self.postData!r}," if self.postData else ""}',
+            f'{f"data={self.postData!r}," if self.postData else ""}',
             ")",
             sep="\n",
             file=file,
