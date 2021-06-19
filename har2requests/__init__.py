@@ -9,13 +9,15 @@ from functools import reduce, lru_cache
 from operator import attrgetter
 import warnings
 import traceback
+from dataclasses import dataclass
+from typing import Union
+from datetime import datetime
 
 import click
 import dateutil.parser
 from tqdm import tqdm
 
 from .stringalg import longest_common_substring
-
 
 # we look at the last responses to find the definition of a header
 RESPONSE_LOOKUP = 5
@@ -52,11 +54,16 @@ class Variable(str):
         return self
 
 
-class Request(
-    namedtuple(
-        "Request", "method, url, cookies, headers, postData, responseText, datetime"
-    )
-):
+@dataclass
+class Request:
+    method: str
+    url: str
+    cookies: dict
+    headers: dict
+    postData: Union[str, dict]
+    responseText: str
+    datetime: datetime
+
     @staticmethod
     def from_json(request, response, startedDateTime, unsafe=False):
         postData = None
