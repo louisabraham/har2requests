@@ -145,7 +145,6 @@ def main(src, unsafe, no_infer, include_options):
     requests.sort(key=attrgetter("datetime"))
 
     # compute common headers
-    # TODO: use increasing list of base_headers
     all_session_headers = infer_session_headers(requests)
 
     # detect origin of headers
