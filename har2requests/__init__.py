@@ -65,8 +65,8 @@ def infer_headers_origin(requests, base_headers):
         return f"{base_name}_{i}"
 
     responses_db = deque([], RESPONSE_LOOKUP)
+    tried_headers = set()
 
-    # TODO: match only first time a header appears
     # for each key of each header of each request,
     # try to match it in the responses_db
     print("Inferring header origin. If it's slow, try --no-infer", file=sys.stderr)
@@ -76,6 +76,9 @@ def infer_headers_origin(requests, base_headers):
                 continue
             if value in header_to_variable:
                 continue
+            if value in tried_headers:
+                continue
+            tried_headers.add(value)
             for response_id, text in responses_db:
                 if match(value, text):
                     name = new_variable_name(header_key)
