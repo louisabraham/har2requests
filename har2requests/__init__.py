@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from .stringalg import longest_common_substring
 from .utils import dict_change
-from .request import Request
+from .request import Request, Variable
 
 # we look at the last responses to find the definition of a header
 RESPONSE_LOOKUP = 5
@@ -45,7 +45,7 @@ def match(header, text) -> bool:
     return _match_wrapped(header, text)
 
 
-def infer_headers_origin(requests, all_session_headers):
+def infer_headers_origin(requests, base_headers):
     """
     Returns:
         variables_to_bind : List[List[name, value]]
@@ -71,11 +71,9 @@ def infer_headers_origin(requests, all_session_headers):
     # for each key of each header of each request,
     # try to match it in the responses_db
     print("Inferring header origin. If it's slow, try --no-infer.", file=sys.stderr)
-    for request_id, (request, session_headers) in enumerate(
-        zip(tqdm(requests), all_session_headers)
-    ):
+    for request_id, request in enumerate(tqdm(requests)):
         for header_key, value in request.headers.items():
-            if header_key in session_headers:
+            if header_key in base_headers:
                 continue
             if value in header_to_variable:
                 continue
@@ -156,7 +154,7 @@ def main(src, unsafe, no_infer, include_options):
     if no_infer:
         variables_to_bind = [[] for _ in range(len(requests))]
     else:
-        variables_to_bind = infer_headers_origin(requests, all_session_headers)
+        variables_to_bind = infer_headers_origin(requests, all_session_headers[0])
 
     # output through black
     proc = subprocess.Popen(
@@ -177,6 +175,10 @@ def main(src, unsafe, no_infer, include_options):
     ):
 
         header_changes = dict_change(current_session_headers, session_headers)
+        for k, v in header_changes.items():
+            if v in header_to_variable:
+                header_changes[k] = Variable(header_to_variable[v])
+
         if header_changes:
             output(f"s.headers.update({header_changes!r})\n")
         current_session_headers = session_headers
