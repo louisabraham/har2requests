@@ -52,7 +52,7 @@ class Request:
                 postData = Request.dict_from_har(pd["params"])
 
         responseText = response["content"].get("text", "")
-        if "application/json" in response["content"].get("mimeType"):
+        if "application/json" in response["content"].get("mimeType") and responseText:
             responseData = json.loads(responseText)
         else:
             responseData = None
