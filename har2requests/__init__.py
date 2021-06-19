@@ -66,7 +66,8 @@ def infer_headers_origin(requests, base_headers):
 
     responses_db = deque([], RESPONSE_LOOKUP)
 
-    # for each header of each request,
+    # TODO: match only first time a header appears
+    # for each key of each header of each request,
     # try to match it in the responses_db
     print("Inferring header origin. If it's slow, try --no-infer", file=sys.stderr)
     for request_id, request in enumerate(tqdm(requests)):
@@ -117,9 +118,14 @@ def main(src, safe, no_infer, include_options):
     requests.sort(key=attrgetter("datetime"))
 
     # compute common headers
+    # TODO: use increasing list of base_headers
+    # TODO: new headers should be used at least twice
+    # TODO? cluster remaining headers
     base_headers = reduce(dict_intersection, (r.headers for r in requests))
 
     # detect origin of headers
+    # TODO: use variables for all long stuff but keep flagging
+    # TODO: get path of longest string in JSON
     if no_infer:
         variables_to_bind = [[] for _ in range(len(requests))]
     else:

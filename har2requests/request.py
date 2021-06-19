@@ -16,6 +16,9 @@ class Variable(str):
         return self
 
 
+# TODO: pass queryString to params, use urlsplit, _replace
+
+
 @dataclass
 class Request:
     method: str
