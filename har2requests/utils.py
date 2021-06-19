@@ -5,7 +5,10 @@ def dict_intersection(a: dict, b: dict):
 
 def dict_change(a: dict, b: dict):
     """Elements of b that are not the same in a"""
-    return {k: v for k, v in b.items() if k not in a or a[k] != v}
+    return {
+        **{k: v for k, v in b.items() if k not in a or a[k] != v},
+        **{k: None for k in a if k not in b},
+    }
 
 
 def dict_delete(a: dict, b: dict):
