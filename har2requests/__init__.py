@@ -73,10 +73,10 @@ class Request(
             else:
                 if params + text != 1:
                     warnings.warn(POSTDATA_WARNING + f"\n{request}\n{'-'*10}")
-            if params:
-                postData = Request.dict_from_har(pd["params"])
             if text:
                 postData = pd["text"]
+            if params:
+                postData = Request.dict_from_har(pd["params"])
 
         req = Request(
             method=request["method"],
