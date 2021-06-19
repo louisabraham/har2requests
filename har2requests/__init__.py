@@ -193,9 +193,10 @@ def infer_headers_origin(requests, base_headers):
 
 @click.command()
 @click.argument("src", type=click.File(encoding="utf-8"))
-@click.option("--unsafe", is_flag=True)
+@click.option("--safe", is_flag=True)
 @click.option("--no-infer", is_flag=True)
-def main(src, unsafe, no_infer):
+def main(src, safe, no_infer):
+    unsafe = not safe
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
