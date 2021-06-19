@@ -43,14 +43,16 @@ class Request:
             params = "params" in pd
             text = "text" in pd
 
-            POSTDATA_WARNING = (
-                'You need exactly one of "params" or "text" in field postData'
-            )
-            if not unsafe:
-                assert params + text == 1, POSTDATA_WARNING
-            else:
-                if params + text != 1:
-                    warnings.warn(POSTDATA_WARNING + f"\n{request}\n{'-'*10}")
+            # disable annoying warning
+            # POSTDATA_WARNING = (
+            #     'You need exactly one of "params" or "text" in field postData'
+            # )
+            # if not unsafe:
+            #     assert params + text == 1, POSTDATA_WARNING
+            # else:
+            #     if params + text != 1:
+            #         warnings.warn(POSTDATA_WARNING + f"\n{request}\n{'-'*10}")
+
             if text:
                 postData = pd["text"]
             if params:
