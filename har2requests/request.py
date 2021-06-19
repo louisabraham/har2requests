@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Union
 from datetime import datetime
 import sys
+from urllib.parse import urlsplit, urlunsplit
 
 import dateutil.parser
 
@@ -16,13 +17,11 @@ class Variable(str):
         return self
 
 
-# TODO: pass queryString to params, use urlsplit, _replace
-
-
 @dataclass
 class Request:
     method: str
     url: str
+    query: dict
     cookies: dict
     headers: dict
     postData: Union[str, dict]
@@ -31,6 +30,13 @@ class Request:
 
     @staticmethod
     def from_json(request, response, startedDateTime, unsafe=False):
+        url = request["url"]
+        if request.get("queryString", []):
+            query = {a["name"]: a["value"] for a in request["queryString"]}
+            url = urlunsplit(urlsplit(url)._replace(query=""))
+        else:
+            query = None
+
         postData = None
         if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
             pd = request["postData"]
@@ -52,7 +58,8 @@ class Request:
 
         req = Request(
             method=request["method"],
-            url=request["url"],
+            url=url,
+            query=query,
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=postData,
@@ -97,6 +104,7 @@ class Request:
 
         print(
             f"r = requests.{self.method.lower()}({self.url!r},",
+            f'{f"params={self.query!r}," if self.query else ""}',
             f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
             headers_string,
             f'{f"data={self.postData!r}," if self.postData else ""}',
