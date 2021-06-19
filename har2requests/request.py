@@ -32,7 +32,7 @@ class Request:
     def from_json(request, response, startedDateTime, unsafe=False):
         url = request["url"]
         if request.get("queryString", []):
-            query = {a["name"]: a["value"] for a in request["queryString"]}
+            query = Request.dict_from_har(request["queryString"])
             url = urlunsplit(urlsplit(url)._replace(query=""))
         else:
             query = None
