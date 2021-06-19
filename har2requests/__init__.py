@@ -195,7 +195,8 @@ def infer_headers_origin(requests, base_headers):
 @click.argument("src", type=click.File(encoding="utf-8"))
 @click.option("--safe", is_flag=True)
 @click.option("--no-infer", is_flag=True)
-def main(src, safe, no_infer):
+@click.option("--include-options", is_flag=True)
+def main(src, safe, no_infer, include_options):
     unsafe = not safe
     entries = json.load(src)["log"]["entries"]
 
@@ -209,7 +210,8 @@ def main(src, safe, no_infer):
                 entry["startedDateTime"],
                 unsafe=unsafe,
             )
-            requests.append(request)
+            if request.method != "OPTIONS" or include_options:
+                requests.append(request)
         except Exception:
             print(f"Exception while parsing\n{entry}\n{'-'*10}", file=sys.stderr)
             if unsafe:
