@@ -5,7 +5,7 @@ import json
 import sys
 import subprocess
 import io
-from functools import reduce, lru_cache
+from functools import partial, reduce, lru_cache
 from operator import attrgetter
 import traceback
 
@@ -140,8 +140,11 @@ def main(src, safe, no_infer, include_options):
     )
     wrapper = io.TextIOWrapper(proc.stdin)
 
+    output = partial(print, file=wrapper)
+    output("import requests")
+
     # output headers
-    print(f"base_headers = {base_headers!r}\n", file=wrapper)
+    output(f"base_headers = {base_headers!r}\n")
 
     # output requests
     header_to_variable = {}
@@ -151,17 +154,20 @@ def main(src, safe, no_infer, include_options):
             header_to_variable=header_to_variable,
             file=wrapper,
         )
-        print("\n", file=wrapper)
+        output("\n")
 
         if variable_definitions:
-            print(
+            output(
                 "# These variables probably come from the result of the request above",
-                file=wrapper,
             )
             for (name, value) in variable_definitions:
-                print(f"{name} = {value!r}", file=wrapper)
+                output(
+                    f"{name} = {value!r}",
+                )
                 header_to_variable[value] = name
-            print("\n", file=wrapper)
+            output(
+                "\n",
+            )
 
     wrapper.flush()
     proc.stdin.close()
