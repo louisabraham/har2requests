@@ -42,17 +42,22 @@ class Request:
         postData = None
         if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
             pd = request["postData"]
-            params = "params" in pd
-            text = "text" in pd
+            params = "params" in pd and pd["params"]
+            text = "text" in pd and pd["text"]
 
             # if both are presents, only params will be used
             if text:
                 postData = pd["text"]
+                if pd["mimeType"] == "application/json":
+                    postData = json.loads(postData)
             if params:
                 postData = Request.dict_from_har(pd["params"])
 
         responseText = response["content"].get("text", "")
-        if "application/json" in response["content"].get("mimeType") and responseText:
+        if (
+            "application/json" in response["content"].get("mimeType", "")
+            and responseText
+        ):
             responseData = json.loads(responseText)
         else:
             responseData = None
@@ -69,7 +74,7 @@ class Request:
             datetime=dateutil.parser.parse(startedDateTime),
         )
 
-        if response["content"]["size"] > 0 and not req.responseText:
+        if response["content"].get("size", 0) and not req.responseText:
             warnings.warn("content size > 0 but responseText is empty")
 
         return req
