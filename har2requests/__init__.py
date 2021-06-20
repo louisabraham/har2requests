@@ -5,7 +5,7 @@ import json
 import sys
 import subprocess
 import io
-from functools import partial, reduce, lru_cache
+from functools import partial, lru_cache
 from operator import attrgetter
 import traceback
 from typing import List
@@ -120,8 +120,9 @@ def infer_session_headers(requests):
 @click.argument("src", type=click.File(encoding="utf-8"))
 @click.option("--unsafe", is_flag=True)
 @click.option("--no-infer", is_flag=True)
+@click.option("--hide-result", is_flag=True)
 @click.option("--include-options", is_flag=True)
-def main(src, unsafe, no_infer, include_options):
+def main(src, unsafe, no_infer, hide_result, include_options):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
@@ -187,6 +188,13 @@ def main(src, unsafe, no_infer, include_options):
             header_to_variable=header_to_variable,
             file=wrapper,
         )
+        if not hide_result and request.responseData:
+            output(
+                "#"
+                + json.dumps(request.responseData, indent=2)
+                .strip()
+                .replace("\n", "\n# ")
+            )
         output("\n")
 
         if variable_definitions:
@@ -196,7 +204,7 @@ def main(src, unsafe, no_infer, include_options):
             for (name, value) in variable_definitions:
                 definition = value
                 for k, v in json_dfs(request.responseData):
-                    if v in value and len(v) / len(value) > 0.5:
+                    if isinstance(v, str) and v in value and len(v) / len(value) > 0.5:
                         definition = Variable(
                             (
                                 '"'
