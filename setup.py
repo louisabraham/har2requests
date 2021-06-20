@@ -10,7 +10,7 @@ def read(fname):
 
 setup(
     name="har2requests",
-    version="0.1.3",
+    version="0.2.0",
     author="Louis Abraham",
     license="MIT",
     author_email="louis.abraham@yahoo.fr",
