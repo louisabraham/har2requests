@@ -26,6 +26,7 @@ class Request:
     cookies: dict
     headers: dict
     postData: Union[str, dict]
+    isJson: bool
     responseText: str
     responseData: dict
     datetime: datetime
@@ -40,6 +41,7 @@ class Request:
             query = None
 
         postData = None
+        isJson = False
         if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
             pd = request["postData"]
             params = "params" in pd and pd["params"]
@@ -50,6 +52,7 @@ class Request:
                 postData = pd["text"]
                 if pd["mimeType"] == "application/json":
                     postData = json.loads(postData)
+                    isJson = True
             if params:
                 postData = Request.dict_from_har(pd["params"])
 
@@ -69,6 +72,7 @@ class Request:
             cookies=Request.dict_from_har(request["cookies"]),
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=postData,
+            isJson=isJson,
             responseText=responseText,
             responseData=responseData,
             datetime=dateutil.parser.parse(startedDateTime),
@@ -112,7 +116,9 @@ class Request:
             # cookies should be managed at the  session level
             # f'{f"cookies={self.cookies!r}," if self.cookies else ""}',
             headers_string,
-            f'{f"data={self.postData!r}," if self.postData else ""}',
+            f"{'json' if self.isJson else 'data'}={self.postData!r},"
+            if self.postData
+            else "",
             ")",
             sep="\n",
             file=file,
