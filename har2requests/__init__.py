@@ -122,7 +122,8 @@ def infer_session_headers(requests):
 @click.option("--no-infer", is_flag=True)
 @click.option("--hide-result", is_flag=True)
 @click.option("--include-options", is_flag=True)
-def main(src, unsafe, no_infer, hide_result, include_options):
+@click.option("--generate-assertions", is_flag=True)
+def main(src, unsafe, no_infer, hide_result, include_options, generate_assertions):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
@@ -188,6 +189,11 @@ def main(src, unsafe, no_infer, hide_result, include_options):
             header_to_variable=header_to_variable,
             file=wrapper,
         )
+        if generate_assertions:
+            output(
+                f"assert r.status == {request.responseStatus}, f'Expected status {{request.responseStatus}} but was {{r.status}}' for url \"{request.url}\"'"
+            )
+
         if not hide_result and request.responseData:
             output(
                 "#"

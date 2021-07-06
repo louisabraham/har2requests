@@ -27,6 +27,7 @@ class Request:
     headers: dict
     postData: Union[str, dict]
     isJson: bool
+    responseStatus: int
     responseText: str
     responseData: dict
     datetime: datetime
@@ -56,6 +57,7 @@ class Request:
             if params:
                 postData = Request.dict_from_har(pd["params"])
 
+        responseStatus = response["status"]
         responseText = response["content"].get("text", "")
         if (
             "application/json" in response["content"].get("mimeType", "")
@@ -73,6 +75,7 @@ class Request:
             headers=Request.process_headers(Request.dict_from_har(request["headers"])),
             postData=postData,
             isJson=isJson,
+            responseStatus=responseStatus,
             responseText=responseText,
             responseData=responseData,
             datetime=dateutil.parser.parse(startedDateTime),
