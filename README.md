@@ -51,3 +51,9 @@ When encountering errors, you can use the `--unsafe` feature that will display w
 instead of errors if the HAR file does not fit the specification.
 
 `har2requests` uses string matching algorithms to find the origin of authorization headers. If your file is too big, it might be slow. You can disable it with `--no-infer`.
+
+## Workflow tips
+
+* `--exclude-cookie-headers` avoids the need to manually edit the output if all cookies are assigned by the website each session (the common scenario).
+* `--generate-assertions` helps pinpoint unexpected variations quickly.
+* `--debug-requests` helps if you need to debug the requests/responses themselves. 
