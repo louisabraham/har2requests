@@ -28,12 +28,14 @@ class Request:
     postData: Union[str, dict]
     isJson: bool
     responseStatus: int
+    responseHeaders: dict
     responseText: str
     responseData: dict
+    responseCookies: dict
     datetime: datetime
 
     @staticmethod
-    def from_json(request, response, startedDateTime):
+    def from_json(request, response, startedDateTime, exclude_cookie_headers):
         url = request["url"]
         if request.get("queryString", []):
             query = Request.dict_from_har(request["queryString"])
@@ -67,17 +69,24 @@ class Request:
         else:
             responseData = None
 
+        headers = Request.process_headers(Request.dict_from_har(request["headers"]))
+        responseHeaders = Request.process_headers(Request.dict_from_har(response["headers"]))
+        if exclude_cookie_headers:
+            headers.pop("Cookie", None)
+
         req = Request(
             method=request["method"],
             url=url,
             query=query,
             cookies=Request.dict_from_har(request["cookies"]),
-            headers=Request.process_headers(Request.dict_from_har(request["headers"])),
+            headers=headers,
             postData=postData,
             isJson=isJson,
             responseStatus=responseStatus,
+            responseHeaders=responseHeaders,
             responseText=responseText,
             responseData=responseData,
+            responseCookies=Request.dict_from_har(response["cookies"]),
             datetime=dateutil.parser.parse(startedDateTime),
         )
 
