@@ -5,6 +5,7 @@ from datetime import datetime
 import sys
 from urllib.parse import urlsplit, urlunsplit
 import json
+from http.client import _is_legal_header_name as is_legal_header_name
 
 import dateutil.parser
 
@@ -90,7 +91,7 @@ class Request:
 
     @staticmethod
     def process_headers(headers):
-        headers = headers.copy()
+        headers = {k: v for k, v in headers.items() if is_legal_header_name(k)}
         headers.pop("Content-Type", None)
         headers.pop("Content-Length", None)
         return headers
