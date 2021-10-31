@@ -2,6 +2,7 @@
 
 from collections import Counter, deque
 import json
+import re
 import sys
 import subprocess
 import io
@@ -122,7 +123,10 @@ def infer_session_headers(requests):
 @click.option("--no-infer", is_flag=True)
 @click.option("--hide-result", is_flag=True)
 @click.option("--include-options", is_flag=True)
-def main(src, unsafe, no_infer, hide_result, include_options):
+@click.option("--generate-assertions", is_flag=True)
+@click.option("--exclude-cookie-headers", is_flag=True)
+@click.option("--debug-requests", is_flag=True)
+def main(src, unsafe, no_infer, hide_result, include_options, generate_assertions, exclude_cookie_headers, debug_requests):
     entries = json.load(src)["log"]["entries"]
 
     # read all requests
@@ -133,6 +137,7 @@ def main(src, unsafe, no_infer, hide_result, include_options):
                 entry["request"],
                 entry["response"],
                 entry["startedDateTime"],
+                exclude_cookie_headers
             )
             if request.method != "OPTIONS" or include_options:
                 requests.append(request)
@@ -163,6 +168,23 @@ def main(src, unsafe, no_infer, hide_result, include_options):
 
     output = partial(print, file=wrapper)
     output("import requests")
+    if debug_requests:
+        output("""import logging
+
+# Enabling debugging at http.client level (requests->urllib3->http.client)
+# you will see the REQUEST, including HEADERS and DATA, and RESPONSE with HEADERS but without DATA.
+# the only thing missing will be the response.body which is not logged.
+try: # for Python 3
+    from http.client import HTTPConnection
+except ImportError:
+    from httplib import HTTPConnection
+HTTPConnection.debuglevel = 1
+
+logging.basicConfig() # you need to initialize logging, otherwise you will not see anything from requests
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("urllib3")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True""")
     output("s = requests.Session()\n")
 
     # output headers
@@ -188,6 +210,43 @@ def main(src, unsafe, no_infer, hide_result, include_options):
             header_to_variable=header_to_variable,
             file=wrapper,
         )
+        if generate_assertions:
+            output(
+                f"assert r.status_code == {request.responseStatus}, f'Expected status {request.responseStatus} but was {{r.status_code}} for url \"{request.url}\"'"
+            )
+
+        if debug_requests:
+            output('# request headers:')
+            output("#"
+                + json.dumps(request.headers, indent=2)
+                .strip()
+                .replace("\n", "\n# "))
+            output('# request cookies:')
+            output("#"
+                + json.dumps(request.cookies, indent=2)
+                .strip()
+                .replace("\n", "\n# "))
+            output('# response headers:')
+            output("#"
+                + json.dumps(request.responseHeaders, indent=2)
+                .strip()
+                .replace("\n", "\n# "))
+            output('# response cookies:')
+            output("#"
+                + json.dumps(request.responseCookies, indent=2)
+                .strip()
+                .replace("\n", "\n# "))
+
+        if generate_assertions:
+            expected_cookie_names = set(list(k for k,v in request.cookies.items() if v != '') + list(request.responseCookies.keys()))
+            for k in expected_cookie_names.copy():
+                if k in request.responseCookies and request.responseCookies[k] == '':
+                    expected_cookie_names.remove(k)
+            expected_cookie_names_safe = str(list(map(lambda str: re.sub("'", "\\'", str), expected_cookie_names)))
+            output(
+                f"assert set({expected_cookie_names_safe}) == set(s.cookies.get_dict().keys()), f\"Expected defined cookies to be {expected_cookie_names_safe} but was {{s.cookies.get_dict().keys()}} for url \\\"{request.url}\\\"\""
+            )
+
         if not hide_result and request.responseData:
             output(
                 "#"
