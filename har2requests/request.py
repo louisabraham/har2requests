@@ -103,7 +103,7 @@ class Request:
 
     @staticmethod
     def process_headers(headers):
-        headers = {k: v for k, v in headers.items() if is_legal_header_name(k)}
+        headers = {k: v for k, v in headers.items() if is_legal_header_name(k.encode("utf-8"))}
         headers.pop("Content-Type", None)
         headers.pop("Content-Length", None)
         return headers
