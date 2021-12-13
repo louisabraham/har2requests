@@ -157,6 +157,8 @@ def main(src, unsafe, no_infer, hide_result, include_options, generate_assertion
     # TODO: use variables for all long stuff but keep flagging
     if no_infer:
         variables_to_bind = [[] for _ in range(len(requests))]
+    elif not all_session_headers:
+        variables_to_bind = [[] for _ in range(len(requests))]
     else:
         variables_to_bind = infer_headers_origin(requests, all_session_headers[0])
 
