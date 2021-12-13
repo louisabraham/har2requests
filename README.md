@@ -1,3 +1,6 @@
+[![Downloads](https://pepy.tech/badge/har2requests)](https://pepy.tech/project/har2requests) [![PyPI
+version](https://badge.fury.io/py/har2requests.svg)](https://badge.fury.io/py/har2requests)
+
 # har2requests
 
 - Step 1: Interact with a website from your usual browser
