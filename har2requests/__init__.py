@@ -118,7 +118,7 @@ def infer_session_headers(requests):
 
 
 @click.command()
-@click.argument("src", type=click.File(encoding="utf-8"))
+@click.argument("src", type=click.File(encoding="utf-8"), default=sys.stdin)
 @click.option("--unsafe", is_flag=True)
 @click.option("--no-infer", is_flag=True)
 @click.option("--hide-result", is_flag=True)
