@@ -46,7 +46,7 @@ class Request:
 
         postData = None
         isJson = False
-        if request["method"] in ["POST", "PUT"] and request["bodySize"] != 0:
+        if request["method"] in ["POST", "PUT"] and request["bodySize"] > 0:
             pd = request["postData"]
             params = "params" in pd and pd["params"]
             text = "text" in pd and pd["text"]
